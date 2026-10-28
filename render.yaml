@@ -1,0 +1,35 @@
+services:
+  - type: web
+    name: crud-backend
+    runtime: node
+    rootDir: backend
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: FRONTEND_URL
+        value: https://crud-frontend.onrender.com
+
+  - type: web
+    name: crud-frontend
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    envVars:
+      - key: VITE_API_HOST
+        fromService:
+          type: web
+          name: crud-backend
+          property: host
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
