@@ -4,8 +4,8 @@ services:
     runtime: node
     rootDir: backend
     plan: free
-    buildCommand: curl -fsSL https://bun.sh/install | bash -s "bun-v1.4.4" && $HOME/.bun/bin/bun install --frozen-lockfile
-    startCommand: $HOME/.bun/bin/bun run start
+    buildCommand: bun install --frozen-lockfile
+    startCommand: bun run start
     healthCheckPath: /health
     envVars:
       - key: NODE_ENV
@@ -21,7 +21,7 @@ services:
     name: crud-frontend
     runtime: static
     rootDir: frontend
-    buildCommand: curl -fsSL https://bun.sh/install | bash -s "bun-v1.4.4" && $HOME/.bun/bin/bun install --frozen-lockfile && $HOME/.bun/bin/bun run build
+    buildCommand: bun install --frozen-lockfile && bun run build
     staticPublishPath: ./dist
     envVars:
       - key: VITE_API_HOST
