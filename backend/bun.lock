@@ -11,6 +11,7 @@
         "express": "^5.3.0",
         "jsonwebtoken": "^9.0.3",
         "mongoose": "^9.11.4",
+        "morgan": "^1.12.1",
       },
       "devDependencies": {
         "@types/express": "^5.0.6",
@@ -47,6 +48,8 @@
     "@types/whatwg-url": ["@types/whatwg-url@13.0.0", "https://dpm.drops-it.com/npm/%40types%2Fwhatwg-url/-/whatwg-url-13.0.0.tgz", { "dependencies": { "@types/webidl-conversions": "*" } }, "sha512-N8WXpbE6Wgri7KUSvrmQcqrMllKZ9uxkYWMt+mCSGwNc0Hsw9VQTW7ApqI4XNrx6/SaM2QQJCzMPDEXE058s+Q=="],
 
     "accepts": ["accepts@2.0.0", "https://dpm.drops-it.com/npm/accepts/-/accepts-2.0.0.tgz", { "dependencies": { "mime-types": "^3.0.0", "negotiator": "^1.0.0" } }, "sha512-5cvg6CtKwfgdmVqY1WIiXKc3Q1bkRqGLi+2W/6ao+6Y7gu/RCwRuAhGEzh5B4KlszSuTLgZYuqFqo5bImjNKng=="],
+
+    "basic-auth": ["basic-auth@2.0.1", "https://dpm.drops-it.com/npm/basic-auth/-/basic-auth-2.0.1.tgz", { "dependencies": { "safe-buffer": "5.1.2" } }, "sha512-NF+epuEdnUYVlGuhaxbbq+dvJttwLnGY+YixlXlME5KpQ5W3CnXA5cVTneY3SPbPDRkcjMbifrwmFYcClgOZeg=="],
 
     "bcryptjs": ["bcryptjs@3.0.3", "https://dpm.drops-it.com/npm/bcryptjs/-/bcryptjs-3.0.3.tgz", { "bin": { "bcrypt": "bin/bcrypt" } }, "sha512-GlF5wPWnSa/X5LKM1o0wz0suXIINz1iHRLvTS+sLyi7XPbe5ycmYI3DlZqVGZZtDgl4DmasFg7gOB3JYbphV5g=="],
 
@@ -166,6 +169,8 @@
 
     "mongoose": ["mongoose@9.11.4", "https://dpm.drops-it.com/npm/mongoose/-/mongoose-9.11.4.tgz", { "dependencies": { "@standard-schema/spec": "^1.1.0", "kareem": "3.4.1", "mongodb": "~7.7", "mpath": "0.9.0", "mquery": "6.0.1", "ms": "2.1.3", "sift": "17.1.3" } }, "sha512-+xME0fduXl1sWF+NZpJHZaNcwQSt+X2vbJ/h7GRSZ/ltLycAkGZSEABhzic0+q3IMF66KqF0viEE5+frchKCAQ=="],
 
+    "morgan": ["morgan@1.12.1", "https://dpm.drops-it.com/npm/morgan/-/morgan-1.12.1.tgz", { "dependencies": { "basic-auth": "~2.0.1", "debug": "2.6.9", "depd": "~2.0.0", "on-finished": "~2.4.1", "on-headers": "~1.1.0" } }, "sha512-tljKC0ex20AjO58Ob/eZ53JloycbVswbVNCHx6V6VLGzqt/w8dIynVGL0G8qVjNKwiA7sYSogCrN6QtJ82IV+g=="],
+
     "mpath": ["mpath@0.9.0", "https://dpm.drops-it.com/npm/mpath/-/mpath-0.9.0.tgz", {}, "sha512-ikJRQTk8hw5DEoFVxHG1Gn9T/xcjtdnOKIU1JTmGjZZlg9LST2mBLmcX3/ICIbgJydT2GOc15RnNy5mHmzfSew=="],
 
     "mquery": ["mquery@6.0.1", "https://dpm.drops-it.com/npm/mquery/-/mquery-6.0.1.tgz", {}, "sha512-/Nijmq3JcpHwDM+5CwBp5yEl6fUa6jLsIhPsoQywlGXU/ZrKIvSpBzfaGnW9BLqcne/CoUwd1ch7MRqptDgFTA=="],
@@ -179,6 +184,8 @@
     "object-inspect": ["object-inspect@1.13.4", "https://dpm.drops-it.com/npm/object-inspect/-/object-inspect-1.13.4.tgz", {}, "sha512-W67iLl4J2EXEGTbfeHCffrjDfitvLANg0UlX3wFUUSTx92KXRFegMHUVgSqE+wvhAbi4WqjGg9czysTV2Epbew=="],
 
     "on-finished": ["on-finished@2.4.2", "https://dpm.drops-it.com/npm/on-finished/-/on-finished-2.4.2.tgz", { "dependencies": { "ee-first": "1.1.1" } }, "sha512-ATWUv387i+nLD49EiDoOft5scf32Vsdz3ktrQJG9bi7jRFmaXTssvyvj1EmeKVVgvesbqUtvQQvaS2TpTukAZQ=="],
+
+    "on-headers": ["on-headers@1.1.0", "https://dpm.drops-it.com/npm/on-headers/-/on-headers-1.1.0.tgz", {}, "sha512-737ZY3yNnXy37FHkQxPzt4UZ2UWPWiCZWLvFZ4fu5cueciegX0zGPnrlY6bwRg4FdQOe9YU8MkmJwGhoMybl8A=="],
 
     "once": ["once@1.4.0", "https://dpm.drops-it.com/npm/once/-/once-1.4.0.tgz", { "dependencies": { "wrappy": "1" } }, "sha512-lNaJgI+2Q5URQBkccEKHTQOPaXdUxnZZElQTZY0MFUAuaEqe1E+Nyvgdz/aIyNi6Z9MzO5dv1H8n58/GELp3+w=="],
 
@@ -241,5 +248,11 @@
     "whatwg-url": ["whatwg-url@14.2.0", "https://dpm.drops-it.com/npm/whatwg-url/-/whatwg-url-14.2.0.tgz", { "dependencies": { "tr46": "^5.1.0", "webidl-conversions": "^7.0.0" } }, "sha512-De72GdQZzNTUBBChsXueQUnPKDkg/5A5zp7pFDuQAj5UFoENpiACU0wlCvzpAGnTkj++ihpKwKyYewn/XNUbKw=="],
 
     "wrappy": ["wrappy@1.0.2", "https://dpm.drops-it.com/npm/wrappy/-/wrappy-1.0.2.tgz", {}, "sha512-l4Sp/DRseor9wL6EvV2+TuQn63dMkPjZ/sp9XkghTEbV9KlPS1xUsZ3u7/IQO4wxtcFB4bgpQPRcR3QCvezPcQ=="],
+
+    "basic-auth/safe-buffer": ["safe-buffer@5.1.2", "https://dpm.drops-it.com/npm/safe-buffer/-/safe-buffer-5.1.2.tgz", {}, "sha512-Gd2UZBJDkXlY7GbJxfsE8/nvKkUEU1G38c1siN6QP6a9PT9MmHB8GnpscSmMJSoF8LOIrt8ud/wPtojys4G6+g=="],
+
+    "morgan/debug": ["debug@2.6.9", "https://dpm.drops-it.com/npm/debug/-/debug-2.6.9.tgz", { "dependencies": { "ms": "2.0.0" } }, "sha512-bC7ElrdJaJnPbAP+1EotYvqZsb3ecl5wi6Bfi6BJTUcNowp6cvspg0jXznRTKDjm/E7AdgFBVeAPVMNcKGsHMA=="],
+
+    "morgan/debug/ms": ["ms@2.0.0", "https://dpm.drops-it.com/npm/ms/-/ms-2.0.0.tgz", {}, "sha512-Tpp60P6IUJDTuOq/5Z8cdskzJujfwqfOTkrwIwj7IRISpnkJnT6SyJ4PCPnGMoFjC9ddhal5KVIYtAt97ix05A=="],
   }
 }

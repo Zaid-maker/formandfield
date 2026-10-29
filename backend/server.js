@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import morgan from 'morgan';
 import connectDB from './config/db.js';
 import authRoutes from './routes/authRoutes.js';
 import dashboardRoutes from './routes/dashboardRoutes.js';
@@ -14,6 +15,7 @@ const allowedOrigins = [
 ].filter(Boolean);
 
 app.use(cors({ origin: allowedOrigins }));
+app.use(morgan(process.env.NODE_ENV === 'development' ? 'dev' : 'tiny'));
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true }));
 
