@@ -19,6 +19,11 @@ function WaitlistPage() {
   const navigate = useNavigate()
   const account = getRegisteredAccount(location.state)
 
+  function previewDashboard() {
+    sessionStorage.setItem('dashboardPreview', 'true')
+    navigate('/dashboard-preview')
+  }
+
   return (
     <main className="relative flex min-h-screen items-center justify-center bg-[#f7f7fb] px-4 py-20 transition-colors sm:px-8 dark:bg-[#0b0a12]">
       <div className="absolute right-5 top-5 z-10 sm:right-8 sm:top-8">
@@ -51,16 +56,25 @@ function WaitlistPage() {
               <p className="mt-1 break-all text-sm text-slate-500 dark:text-slate-400">{account.emailAddress}</p>
             </>
           )}
-          <button
-            type="button"
-            onClick={() => navigate('/login')}
-            className="mt-8 flex w-full items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 py-3.5 text-sm font-semibold text-white shadow-lg shadow-violet-600/20 transition hover:bg-violet-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-600 sm:w-auto"
-          >
-            Go to sign in
-            <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-4 w-4">
-              <path d="M4.5 10h11m0 0-4.5-4.5M15.5 10 11 14.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <button
+              type="button"
+              onClick={previewDashboard}
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 px-5 py-3.5 text-sm font-semibold text-slate-700 transition hover:border-violet-300 hover:bg-violet-50 hover:text-violet-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-600 sm:w-auto dark:border-white/10 dark:text-slate-200 dark:hover:border-violet-400/40 dark:hover:bg-violet-400/10 dark:hover:text-violet-200"
+            >
+              Preview dashboard
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate('/login')}
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 py-3.5 text-sm font-semibold text-white shadow-lg shadow-violet-600/20 transition hover:bg-violet-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-600 sm:w-auto"
+            >
+              Go to sign in
+              <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-4 w-4">
+                <path d="M4.5 10h11m0 0-4.5-4.5M15.5 10 11 14.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+          </div>
         </div>
       </section>
     </main>

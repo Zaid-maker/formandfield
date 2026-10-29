@@ -1,6 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router'
 import { ThemeProvider } from './context/ThemeContext.jsx'
 import AuthLayout from './layouts/AuthLayout.jsx'
+import DashboardPage from './pages/DashboardPage.jsx'
 import LoginPage from './pages/LoginPage.jsx'
 import RegisterPage from './pages/RegisterPage.jsx'
 import WaitlistPage from './pages/WaitlistPage.jsx'
@@ -16,6 +17,8 @@ function App() {
             <Route path="login" element={<LoginPage />} />
           </Route>
           <Route path="waitlist" element={<WaitlistPage />} />
+          <Route path="dashboard" element={<DashboardPage gated />} />
+          <Route path="dashboard-preview" element={<DashboardPage preview />} />
           <Route path="*" element={<Navigate to="/register" replace />} />
         </Routes>
       </ThemeProvider>

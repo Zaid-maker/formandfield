@@ -67,8 +67,9 @@ function AuthForm({ mode }) {
         if (response.data.token) {
           sessionStorage.setItem('token', response.data.token)
         }
-        setFeedback({ type: 'success', message: 'You’re signed in successfully.' })
-        setForm((current) => ({ ...current, password: '' }))
+        const account = { emailAddress: form.emailAddress.trim().toLowerCase() }
+        sessionStorage.setItem('registeredAccount', JSON.stringify(account))
+        navigate('/waitlist', { state: account })
       }
     } catch (error) {
       setFeedback({
