@@ -1,65 +1,61 @@
 import { useState } from 'react'
 import { Navigate, useNavigate } from 'react-router'
 import ThemeToggle from '../components/ThemeToggle.jsx'
+import useDashboardChat from '../hooks/useDashboardChat.js'
 
-const servers = [
+const demoServers = [
   { id: 'field-notes', label: 'Field Notes', short: 'FN', color: 'bg-violet-600' },
   { id: 'garden-club', label: 'Garden Club', short: 'GC', color: 'bg-emerald-600' },
   { id: 'studio', label: 'Studio', short: 'S', color: 'bg-amber-500' },
 ]
 
-const channels = [
+const demoChannels = [
   { category: 'YOUR SPACE', items: ['general', 'introductions', 'ideas'] },
   { category: 'HANGOUT', items: ['off-topic', 'show-and-tell'] },
 ]
 
-const starterMessages = [
-  {
-    name: 'Maya Chen',
-    initials: 'MC',
-    color: 'bg-rose-400',
-    time: 'Today at 9:41 AM',
-    text: 'Morning everyone! What is one small thing you are looking forward to this week?',
-  },
-  {
-    name: 'Jordan Lee',
-    initials: 'JL',
-    color: 'bg-sky-500',
-    time: 'Today at 9:46 AM',
-    text: 'Getting outside for a long walk. The weather is finally starting to feel like spring.',
-  },
-  {
-    name: 'You',
-    initials: 'Y',
-    color: 'bg-violet-600',
-    time: 'Today at 9:52 AM',
-    text: 'I am excited to get this space up and running. Happy to be here!',
-  },
-]
-
 function DashboardWorkspace({ isPreview }) {
   const navigate = useNavigate()
-  const [activeServer, setActiveServer] = useState(servers[0])
-  const [activeChannel, setActiveChannel] = useState('general')
+  const {
+    activeChannelId,
+    channels: workspaceChannels,
+    error,
+    hasToken,
+    isLoading,
+    messages,
+    sendMessage: postMessage,
+    server,
+    setActiveChannelId,
+    user,
+  } = useDashboardChat({ isPreview })
+  const [demoActiveServer, setDemoActiveServer] = useState(demoServers[0])
+  const [demoActiveChannel, setDemoActiveChannel] = useState('general')
   const [draft, setDraft] = useState('')
-  const [messages, setMessages] = useState(starterMessages)
 
-  function sendMessage(event) {
+  const servers = hasToken
+    ? server
+      ? [{ id: server.id, label: server.name, short: server.name.slice(0, 2).toUpperCase(), color: 'bg-violet-600' }]
+      : []
+    : demoServers
+  const activeServer = hasToken ? servers[0] : demoActiveServer
+  const activeChannel = hasToken
+    ? workspaceChannels?.find((channel) => channel.id === activeChannelId)?.name ?? 'general'
+    : demoActiveChannel
+  const channelGroups = hasToken
+    ? [{ category: 'TEXT CHANNELS', items: workspaceChannels ?? [] }]
+    : demoChannels.map((group) => ({
+        ...group,
+        items: group.items.map((name) => ({ id: name, name })),
+      }))
+
+  async function sendMessage(event) {
     event.preventDefault()
     const text = draft.trim()
-    if (!text) return
+    if (!text || (hasToken && !activeChannelId)) return
 
-    setMessages((current) => [
-      ...current,
-      {
-        name: 'You',
-        initials: 'Y',
-        color: 'bg-violet-600',
-        time: 'Just now',
-        text,
-      },
-    ])
-    setDraft('')
+    if (await postMessage(activeChannelId, text)) {
+      setDraft('')
+    }
   }
 
   return (
@@ -78,28 +74,32 @@ function DashboardWorkspace({ isPreview }) {
             type="button"
             title={server.label}
             aria-label={`${server.label} server`}
-            aria-pressed={activeServer.id === server.id}
-            onClick={() => setActiveServer(server)}
+            aria-pressed={activeServer?.id === server.id}
+            onClick={() => {
+              if (!hasToken) setDemoActiveServer(server)
+            }}
             className={`group relative flex h-12 w-12 items-center justify-center rounded-2xl text-sm font-bold text-white transition ${
-              activeServer.id === server.id
+              activeServer?.id === server.id
                 ? `${server.color} rounded-xl`
                 : `${server.color} hover:rounded-xl`
             }`}
           >
-            {activeServer.id === server.id && (
+            {activeServer?.id === server.id && (
               <span className="absolute -left-[13px] h-8 w-1 rounded-r-full bg-slate-900 dark:bg-white" />
             )}
             {server.short}
           </button>
         ))}
-        <button
-          type="button"
-          aria-label="Add a server"
-          title="Add a server"
-          className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-2xl text-emerald-600 shadow-sm transition hover:rounded-xl hover:bg-emerald-600 hover:text-white dark:bg-[#313338] dark:text-emerald-400 dark:hover:bg-emerald-600 dark:hover:text-white"
-        >
-          +
-        </button>
+        {!hasToken && (
+          <button
+            type="button"
+            aria-label="Add a server"
+            title="Add a server"
+            className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-2xl text-emerald-600 shadow-sm transition hover:rounded-xl hover:bg-emerald-600 hover:text-white dark:bg-[#313338] dark:text-emerald-400 dark:hover:bg-emerald-600 dark:hover:text-white"
+          >
+            +
+          </button>
+        )}
         <div className="mt-auto">
           <ThemeToggle />
         </div>
@@ -109,16 +109,16 @@ function DashboardWorkspace({ isPreview }) {
         <button
           type="button"
           className="flex h-14 items-center justify-between border-b border-slate-200 px-4 text-left font-bold shadow-sm dark:border-black/20"
-          aria-label={`${activeServer.label} server menu`}
+          aria-label={`${activeServer?.label ?? (hasToken ? 'Your workspace' : 'Field Notes')} server menu`}
         >
-          <span className="truncate">{activeServer.label}</span>
+          <span className="truncate">{activeServer?.label ?? 'Field Notes'}</span>
           <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-4 w-4 shrink-0 text-slate-500">
             <path d="m6 8 4 4 4-4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </button>
 
         <div className="flex-1 overflow-y-auto px-2 py-4">
-          {channels.map((group) => (
+          {channelGroups.map((group) => (
             <div key={group.category} className="mb-6">
               <p className="mb-2 px-2 text-[10px] font-bold tracking-[0.14em] text-slate-500 dark:text-slate-400">
                 {group.category}
@@ -126,40 +126,47 @@ function DashboardWorkspace({ isPreview }) {
               <div className="space-y-1">
                 {group.items.map((channel) => (
                   <button
-                    key={channel}
+                    key={channel.id}
                     type="button"
-                    aria-current={activeChannel === channel ? 'page' : undefined}
-                    onClick={() => setActiveChannel(channel)}
+                    aria-current={activeChannel === channel.name ? 'page' : undefined}
+                    onClick={() => {
+                      if (hasToken) setActiveChannelId(channel.id)
+                      else setDemoActiveChannel(channel.name)
+                    }}
                     className={`flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm transition ${
-                      activeChannel === channel
+                      activeChannel === channel.name
                         ? 'bg-slate-200 font-semibold text-slate-900 dark:bg-[#404249] dark:text-white'
                         : 'text-slate-500 hover:bg-slate-200/70 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-[#35373c] dark:hover:text-slate-100'
                     }`}
                   >
                     <span className="text-lg leading-none text-slate-400">#</span>
-                    <span className="truncate">{channel}</span>
+                    <span className="truncate">{channel.name}</span>
                   </button>
                 ))}
               </div>
             </div>
           ))}
-          <div className="mb-2 flex items-center justify-between px-2 text-[10px] font-bold tracking-[0.14em] text-slate-500 dark:text-slate-400">
-            <span>VOICE ROOMS</span>
-            <button type="button" aria-label="Add a voice room" className="text-base leading-none hover:text-slate-900 dark:hover:text-white">+</button>
-          </div>
-          <div className="flex items-center gap-2 rounded-md px-2 py-2 text-sm text-slate-500 dark:text-slate-400">
-            <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-4 w-4">
-              <path d="M7.5 4.5a2.5 2.5 0 0 1 5 0v5a2.5 2.5 0 0 1-5 0v-5ZM5 9.5a5 5 0 0 0 10 0M10 14.5v3m-3 0h6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
-            <span>Quiet corner</span>
-          </div>
+          {!hasToken && (
+            <>
+              <div className="mb-2 flex items-center justify-between px-2 text-[10px] font-bold tracking-[0.14em] text-slate-500 dark:text-slate-400">
+                <span>VOICE ROOMS</span>
+                <button type="button" aria-label="Add a voice room" className="text-base leading-none hover:text-slate-900 dark:hover:text-white">+</button>
+              </div>
+              <div className="flex items-center gap-2 rounded-md px-2 py-2 text-sm text-slate-500 dark:text-slate-400">
+                <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-4 w-4">
+                  <path d="M7.5 4.5a2.5 2.5 0 0 1 5 0v5a2.5 2.5 0 0 1-5 0v-5ZM5 9.5a5 5 0 0 0 10 0M10 14.5v3m-3 0h6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+                <span>Quiet corner</span>
+              </div>
+            </>
+          )}
         </div>
 
         <div className="flex items-center gap-2 border-t border-slate-200 bg-slate-100 px-3 py-3 dark:border-black/20 dark:bg-[#232428]">
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-violet-600 text-xs font-bold text-white">Y</div>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-xs font-semibold">Your account</p>
-            <p className="truncate text-[10px] text-slate-500 dark:text-slate-400">On the waitlist</p>
+            <p className="truncate text-xs font-semibold">{user?.username ?? 'Your account'}</p>
+            <p className="truncate text-[10px] text-slate-500 dark:text-slate-400">{hasToken ? 'Online' : 'On the waitlist'}</p>
           </div>
           <button type="button" aria-label="User settings" className="rounded p-1 text-slate-500 hover:bg-slate-200 dark:text-slate-400 dark:hover:bg-white/10">
             <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-4 w-4">
@@ -195,20 +202,27 @@ function DashboardWorkspace({ isPreview }) {
                 <circle cx="8.8" cy="8.8" r="5.3" stroke="currentColor" strokeWidth="1.5" /><path d="m13 13 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
               </svg>
             </button>
-            <span className="text-xs">12 here</span>
+            <span className="text-xs">{hasToken ? '1 here' : '12 here'}</span>
           </div>
         </header>
 
         <div className="flex min-h-0 flex-1">
           <div className="flex min-w-0 flex-1 flex-col">
+            {error && (
+              <p role="alert" className="mx-4 mt-4 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:border-rose-400/20 dark:bg-rose-400/10 dark:text-rose-200 sm:mx-6">
+                {error}
+              </p>
+            )}
             <div className="flex-1 space-y-6 overflow-y-auto px-4 py-6 sm:px-6">
               <div className="mb-8 mt-auto border-b border-slate-200 pb-5 dark:border-white/10">
                 <div className="mb-2 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-200 text-3xl text-slate-500 dark:bg-[#404249] dark:text-slate-300">#</div>
                 <h2 className="text-2xl font-bold">Welcome to #{activeChannel}!</h2>
                 <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">This is the beginning of the #{activeChannel} channel.</p>
               </div>
-              {messages.map((message, index) => (
-                <article key={`${message.name}-${message.time}-${index}`} className="group flex gap-3">
+              {isLoading ? (
+                <p className="text-sm text-slate-500 dark:text-slate-400">Loading your workspace…</p>
+              ) : messages.map((message) => (
+                <article key={message.id} className="group flex gap-3">
                   <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white ${message.color}`}>
                     {message.initials}
                   </div>
@@ -230,7 +244,8 @@ function DashboardWorkspace({ isPreview }) {
                   id="chat-message"
                   value={draft}
                   onChange={(event) => setDraft(event.target.value)}
-                  placeholder={`Message #${activeChannel}`}
+                  placeholder={hasToken && !activeChannelId ? 'Loading channels…' : `Message #${activeChannel}`}
+                  disabled={hasToken && !activeChannelId}
                   className="min-w-0 flex-1 bg-transparent py-2 text-sm outline-none placeholder:text-slate-500 dark:placeholder:text-slate-400"
                 />
                 <button type="submit" aria-label="Send message" disabled={!draft.trim()} className="rounded-lg p-2 text-violet-600 transition hover:bg-violet-100 disabled:opacity-40 dark:text-violet-300 dark:hover:bg-white/10">
@@ -243,12 +258,16 @@ function DashboardWorkspace({ isPreview }) {
           </div>
 
           <aside aria-label="Online members" className="hidden w-56 shrink-0 border-l border-slate-200 bg-slate-50 p-4 xl:block dark:border-black/20 dark:bg-[#2b2d31]">
-            <h2 className="mb-4 text-[10px] font-bold tracking-[0.14em] text-slate-500 dark:text-slate-400">ONLINE — 3</h2>
-            {[
-              ['MC', 'Maya Chen', 'bg-rose-400'],
-              ['JL', 'Jordan Lee', 'bg-sky-500'],
-              ['AR', 'Alex Rivera', 'bg-amber-500'],
-            ].map(([initials, name, color]) => (
+            <h2 className="mb-4 text-[10px] font-bold tracking-[0.14em] text-slate-500 dark:text-slate-400">
+              {hasToken ? 'MEMBERS — 1' : 'ONLINE — 3'}
+            </h2>
+            {(hasToken
+              ? user ? [['Y', user.username || `${user.firstName} ${user.lastName}`, 'bg-violet-600']] : []
+              : [
+                  ['MC', 'Maya Chen', 'bg-rose-400'],
+                  ['JL', 'Jordan Lee', 'bg-sky-500'],
+                  ['AR', 'Alex Rivera', 'bg-amber-500'],
+                ]).map(([initials, name, color]) => (
               <div key={name} className="mb-3 flex items-center gap-2 rounded-md px-2 py-1.5">
                 <div className={`relative flex h-8 w-8 items-center justify-center rounded-full text-[10px] font-bold text-white ${color}`}>
                   {initials}
