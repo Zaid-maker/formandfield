@@ -15,7 +15,7 @@ services:
       - key: JWT_SECRET
         generateValue: true
       - key: FRONTEND_URL
-        value: https://crud-frontend.onrender.com
+        value: https://crud-frontend-vpxn.onrender.com
 
   - type: web
     name: crud-frontend
