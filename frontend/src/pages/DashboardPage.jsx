@@ -221,7 +221,7 @@ function DashboardWorkspace({ isPreview }) {
                 <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">This is the beginning of the #{activeChannel} channel.</p>
               </div>
               {isLoading ? (
-                <p className="text-sm text-slate-500 dark:text-slate-400">Loading your workspace…</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">Loading workspace messages…</p>
               ) : messages.map((message) => (
                 <article key={message.id} className="group flex gap-3">
                   <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white ${message.color}`}>

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router'
 import api from '../lib/api.js'
 
@@ -45,169 +46,128 @@ function mapMessage(message, currentUserId) {
   }
 }
 
-function appendUniqueMessages(current, incoming) {
-  const existingIds = new Set(current.map((message) => message.id))
-  return [...current, ...incoming.filter((message) => !existingIds.has(message.id))]
+function mergeMessages(current = [], incoming = []) {
+  const messagesById = new Map(current.map((message) => [message.id, message]))
+  incoming.forEach((message) => messagesById.set(message.id, message))
+  return [...messagesById.values()].sort((first, second) => first.id.localeCompare(second.id))
+}
+
+function shouldRetryQuery(failureCount, error) {
+  return error.response?.status !== 401 && failureCount < 1
+}
+
+function getErrorMessage(error, fallback) {
+  return error?.response?.data?.message || fallback
 }
 
 function useDashboardChat({ isPreview }) {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const [hasToken] = useState(() => Boolean(sessionStorage.getItem('token')))
-  const [workspace, setWorkspace] = useState(null)
-  const [activeChannelId, setActiveChannelId] = useState(null)
-  const [messagesByChannel, setMessagesByChannel] = useState(() => hasToken ? {} : { demo: demoMessages })
-  const [isLoading, setIsLoading] = useState(hasToken && isPreview)
-  const [isSending, setIsSending] = useState(false)
-  const [error, setError] = useState('')
-  const cursorRef = useRef('')
+  const [selectedChannelId, setSelectedChannelId] = useState(null)
+  const [previewMessages, setPreviewMessages] = useState(demoMessages)
   const sendingRef = useRef(false)
 
+  const workspaceQuery = useQuery({
+    queryKey: ['dashboard', 'workspace'],
+    queryFn: async () => {
+      const { data } = await api.get('/api/dashboard')
+      return data
+    },
+    enabled: isPreview && hasToken,
+    retry: shouldRetryQuery,
+  })
+
+  const workspace = workspaceQuery.data
+  const activeChannelId = workspace?.channels.some((channel) => channel.id === selectedChannelId)
+    ? selectedChannelId
+    : workspace?.channels[0]?.id ?? null
+
+  const messagesQuery = useQuery({
+    queryKey: ['dashboard', 'messages', activeChannelId],
+    queryFn: async ({ queryKey }) => {
+      const channelId = queryKey[2]
+      const cachedMessages = queryClient.getQueryData(queryKey) ?? []
+      const after = cachedMessages.at(-1)?.id
+      const { data } = await api.get(
+        `/api/dashboard/channels/${channelId}/messages`,
+        { params: after ? { after } : {} }
+      )
+      const incomingMessages = data.messages.map((message) => mapMessage(message, workspace.user.id))
+      return mergeMessages(queryClient.getQueryData(queryKey) ?? cachedMessages, incomingMessages)
+    },
+    enabled: isPreview && hasToken && Boolean(activeChannelId) && Boolean(workspace),
+    refetchInterval: 5000,
+    retry: shouldRetryQuery,
+  })
+
+  const sendMessageMutation = useMutation({
+    mutationFn: async ({ channelId, content }) => {
+      const { data } = await api.post(
+        `/api/dashboard/channels/${channelId}/messages`,
+        { content }
+      )
+      return data.message
+    },
+    onSuccess: (message, { channelId }) => {
+      const queryKey = ['dashboard', 'messages', channelId]
+      const mappedMessage = mapMessage(message, workspace.user.id)
+      queryClient.setQueryData(queryKey, (current = []) => mergeMessages(current, [mappedMessage]))
+    },
+  })
+
+  const requestError = sendMessageMutation.error || messagesQuery.error || workspaceQuery.error
+
   useEffect(() => {
-    if (!isPreview || !hasToken) {
-      return undefined
+    if (requestError?.response?.status === 401) {
+      sessionStorage.removeItem('token')
+      navigate('/login', { replace: true })
     }
-    let active = true
-    api.get('/api/dashboard')
-      .then(({ data }) => {
-        if (!active) return
-        setWorkspace(data)
-        setActiveChannelId(data.channels[0]?.id ?? null)
-      })
-      .catch((requestError) => {
-        if (!active) return
-        if (requestError.response?.status === 401) {
-          sessionStorage.removeItem('token')
-          navigate('/login', { replace: true })
-          return
-        }
-        setError(requestError.response?.data?.message || 'Could not load your workspace. Please try again.')
-      })
-      .finally(() => {
-        if (active) setIsLoading(false)
-      })
-
-    return () => {
-      active = false
-    }
-  }, [hasToken, isPreview, navigate])
-
-  useEffect(() => {
-    if (!hasToken || !activeChannelId) {
-      return undefined
-    }
-
-    let active = true
-    let isFetching = false
-    cursorRef.current = ''
-
-    async function fetchMessages(initial = false) {
-      if (isFetching) return
-      isFetching = true
-      try {
-        const params = !initial && cursorRef.current ? { after: cursorRef.current } : {}
-        const { data } = await api.get(
-          `/api/dashboard/channels/${activeChannelId}/messages`,
-          { params }
-        )
-        if (!active) return
-
-        const newMessages = data.messages.map((message) => mapMessage(message, workspace.user.id))
-        if (initial) {
-          setMessagesByChannel((current) => ({ ...current, [activeChannelId]: newMessages }))
-        } else if (newMessages.length) {
-          setMessagesByChannel((current) => ({
-            ...current,
-            [activeChannelId]: appendUniqueMessages(current[activeChannelId] ?? [], newMessages),
-          }))
-        }
-        if (data.messages.length) {
-          const nextCursor = data.messages[data.messages.length - 1].id
-          if (nextCursor > cursorRef.current) cursorRef.current = nextCursor
-        }
-      } catch (requestError) {
-        if (!active) return
-        if (requestError.response?.status === 401) {
-          sessionStorage.removeItem('token')
-          navigate('/login', { replace: true })
-          return
-        }
-        setError(requestError.response?.data?.message || 'Could not load messages. Please try again.')
-      } finally {
-        isFetching = false
-      }
-    }
-
-    fetchMessages(true)
-    const intervalId = window.setInterval(() => fetchMessages(false), 5000)
-
-    return () => {
-      active = false
-      window.clearInterval(intervalId)
-    }
-  }, [activeChannelId, hasToken, navigate, workspace])
+  }, [navigate, requestError])
 
   async function sendMessage(channelId, content) {
     if (!hasToken) {
-      setMessagesByChannel((current) => ({
+      setPreviewMessages((current) => [
         ...current,
-        demo: [
-          ...(current.demo ?? []),
-          {
-            id: `demo-${Date.now()}`,
-            name: 'You',
-            initials: 'Y',
-            color: 'bg-violet-600',
-            time: 'Just now',
-            text: content,
-          },
-        ],
-      }))
+        {
+          id: `demo-${Date.now()}`,
+          name: 'You',
+          initials: 'Y',
+          color: 'bg-violet-600',
+          time: 'Just now',
+          text: content,
+        },
+      ])
       return true
     }
 
     if (sendingRef.current) return false
     sendingRef.current = true
-    setIsSending(true)
-    setError('')
+    sendMessageMutation.reset()
     try {
-      const { data } = await api.post(
-        `/api/dashboard/channels/${channelId}/messages`,
-        { content }
-      )
-      const message = mapMessage(data.message, workspace.user.id)
-      setMessagesByChannel((current) => ({
-        ...current,
-        [channelId]: appendUniqueMessages(current[channelId] ?? [], [message]),
-      }))
-      if (data.message.id > cursorRef.current) cursorRef.current = data.message.id
-    } catch (requestError) {
-      if (requestError.response?.status === 401) {
-        sessionStorage.removeItem('token')
-        navigate('/login', { replace: true })
-        return false
-      }
-      setError(requestError.response?.data?.message || 'Could not send your message. Please try again.')
+      await sendMessageMutation.mutateAsync({ channelId, content })
+      return true
+    } catch {
       return false
     } finally {
       sendingRef.current = false
-      setIsSending(false)
     }
   }
 
   return {
+    activeChannelId,
     channels: workspace?.channels ?? null,
-    error,
+    error: requestError
+      ? getErrorMessage(requestError, 'Something went wrong. Please try again.')
+      : '',
     hasToken,
-    isLoading,
-    isSending,
-    messages: hasToken
-      ? messagesByChannel[activeChannelId] ?? []
-      : messagesByChannel.demo ?? [],
+    isLoading: workspaceQuery.isLoading || messagesQuery.isLoading,
+    isSending: sendMessageMutation.isPending,
+    messages: hasToken ? messagesQuery.data ?? [] : previewMessages,
     sendMessage,
     server: workspace?.server ?? null,
-    setActiveChannelId,
+    setActiveChannelId: setSelectedChannelId,
     user: workspace?.user ?? null,
-    activeChannelId,
   }
 }
 

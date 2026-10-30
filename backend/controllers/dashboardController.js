@@ -111,6 +111,7 @@ async function getMessages(req, res, next) {
             messages = messages.reverse();
         }
 
+        res.set('Cache-Control', 'no-store');
         return res.status(200).json({
             messages: messages.map((message) => ({
                 id: message._id,
