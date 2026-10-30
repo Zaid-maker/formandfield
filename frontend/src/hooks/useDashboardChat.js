@@ -57,8 +57,10 @@ function useDashboardChat({ isPreview }) {
   const [activeChannelId, setActiveChannelId] = useState(null)
   const [messagesByChannel, setMessagesByChannel] = useState(() => hasToken ? {} : { demo: demoMessages })
   const [isLoading, setIsLoading] = useState(hasToken && isPreview)
+  const [isSending, setIsSending] = useState(false)
   const [error, setError] = useState('')
   const cursorRef = useRef('')
+  const sendingRef = useRef(false)
 
   useEffect(() => {
     if (!isPreview || !hasToken) {
@@ -163,6 +165,9 @@ function useDashboardChat({ isPreview }) {
       return true
     }
 
+    if (sendingRef.current) return false
+    sendingRef.current = true
+    setIsSending(true)
     setError('')
     try {
       const { data } = await api.post(
@@ -183,8 +188,10 @@ function useDashboardChat({ isPreview }) {
       }
       setError(requestError.response?.data?.message || 'Could not send your message. Please try again.')
       return false
+    } finally {
+      sendingRef.current = false
+      setIsSending(false)
     }
-    return true
   }
 
   return {
@@ -192,6 +199,7 @@ function useDashboardChat({ isPreview }) {
     error,
     hasToken,
     isLoading,
+    isSending,
     messages: hasToken
       ? messagesByChannel[activeChannelId] ?? []
       : messagesByChannel.demo ?? [],

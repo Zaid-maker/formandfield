@@ -22,6 +22,7 @@ function DashboardWorkspace({ isPreview }) {
     error,
     hasToken,
     isLoading,
+    isSending,
     messages,
     sendMessage: postMessage,
     server,
@@ -248,7 +249,7 @@ function DashboardWorkspace({ isPreview }) {
                   disabled={hasToken && !activeChannelId}
                   className="min-w-0 flex-1 bg-transparent py-2 text-sm outline-none placeholder:text-slate-500 dark:placeholder:text-slate-400"
                 />
-                <button type="submit" aria-label="Send message" disabled={!draft.trim()} className="rounded-lg p-2 text-violet-600 transition hover:bg-violet-100 disabled:opacity-40 dark:text-violet-300 dark:hover:bg-white/10">
+                <button type="submit" aria-label={isSending ? 'Sending message' : 'Send message'} disabled={!draft.trim() || isSending} className="rounded-lg p-2 text-violet-600 transition hover:bg-violet-100 disabled:opacity-40 dark:text-violet-300 dark:hover:bg-white/10">
                   <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-5 w-5">
                     <path d="m3 9 13-6-4.5 14-2.2-5.3L3 9Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /><path d="m9.3 11.7 3.2-3.2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
                   </svg>
