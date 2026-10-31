@@ -15,4 +15,13 @@ const serverSchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
+// Pre-save middleware to set the name field before saving the server document
+serverSchema.pre('save', function (next) {
+    this.name = this.name.trim();
+    next();
+});
+
+// indexes
+serverSchema.index({ name: 1 }, { unique: true });
+
 export default mongoose.model('Server', serverSchema);

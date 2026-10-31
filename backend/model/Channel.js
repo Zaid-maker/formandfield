@@ -22,6 +22,15 @@ const channelSchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
+// Pre-save middleware to set the name field before saving the channel document
+channelSchema.pre('save', function (next) {
+    this.name = this.name.trim().toLowerCase();
+    next();
+});
+
+//indexes
 channelSchema.index({ server: 1, name: 1 }, { unique: true });
+channelSchema.index({ createdAt: -1 });
+channelSchema.index({ name: 1 });
 
 export default mongoose.model('Channel', channelSchema);

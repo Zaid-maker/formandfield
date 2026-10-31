@@ -19,6 +19,18 @@ const membershipSchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
+// Pre-save middleware to set the role field before saving the membership document
+membershipSchema.pre('save', function (next) {
+    if (!this.role) {
+        this.role = 'owner';
+    }
+    next();
+});
+
+// indexes
 membershipSchema.index({ server: 1, user: 1 }, { unique: true });
+membershipSchema.index({ user: 1 });
+membershipSchema.index({ server: 1 });
+membershipSchema.index({ role: 1 });
 
 export default mongoose.model('Membership', membershipSchema);

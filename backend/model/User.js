@@ -29,4 +29,14 @@ const userSchema = new mongoose.Schema({
     }
 })
 
+// Pre-save middleware to set the fullName field before saving the user document
+userSchema.pre('save', function (next) {
+    this.fullName = `${this.firstName} ${this.lastName}`;
+    next();
+});
+
+// indexes
+userSchema.index({ fullName: 1 });
+
+
 export default mongoose.model('User', userSchema);
