@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router'
-import api from '../lib/api.js'
+import api, { hasAccessToken, setAccessToken } from '../lib/api.js'
 
 const demoMessages = [
   {
@@ -60,10 +60,10 @@ function getErrorMessage(error, fallback) {
   return error?.response?.data?.message || fallback
 }
 
-function useDashboardChat({ isPreview }) {
+function useDashboardChat() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const [hasToken] = useState(() => Boolean(sessionStorage.getItem('token')))
+  const [hasToken] = useState(hasAccessToken)
   const [selectedChannelId, setSelectedChannelId] = useState(null)
   const [previewMessages, setPreviewMessages] = useState(demoMessages)
   const sendingRef = useRef(false)
@@ -74,7 +74,7 @@ function useDashboardChat({ isPreview }) {
       const { data } = await api.get('/api/dashboard')
       return data
     },
-    enabled: isPreview && hasToken,
+    enabled: hasToken,
     retry: shouldRetryQuery,
   })
 
@@ -96,7 +96,7 @@ function useDashboardChat({ isPreview }) {
       const incomingMessages = data.messages.map((message) => mapMessage(message, workspace.user.id))
       return mergeMessages(queryClient.getQueryData(queryKey) ?? cachedMessages, incomingMessages)
     },
-    enabled: isPreview && hasToken && Boolean(activeChannelId) && Boolean(workspace),
+    enabled: hasToken && Boolean(activeChannelId) && Boolean(workspace),
     refetchInterval: 5000,
     retry: shouldRetryQuery,
   })
@@ -119,8 +119,8 @@ function useDashboardChat({ isPreview }) {
   const requestError = sendMessageMutation.error || messagesQuery.error || workspaceQuery.error
 
   useEffect(() => {
-    if (requestError?.response?.status === 401) {
-      sessionStorage.removeItem('token')
+    if (requestError?.authSessionExpired) {
+      setAccessToken(null)
       navigate('/login', { replace: true })
     }
   }, [navigate, requestError])

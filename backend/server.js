@@ -14,7 +14,7 @@ const allowedOrigins = [
     'http://127.0.0.1:5173'
 ].filter(Boolean);
 
-app.use(cors({ origin: allowedOrigins }));
+app.use(cors({ origin: allowedOrigins, credentials: true }));
 app.use(morgan(process.env.NODE_ENV === 'development' ? 'dev' : 'tiny'));
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true }));

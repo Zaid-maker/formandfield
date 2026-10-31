@@ -4,7 +4,6 @@ import AuthLayout from './layouts/AuthLayout.jsx'
 import DashboardPage from './pages/DashboardPage.jsx'
 import LoginPage from './pages/LoginPage.jsx'
 import RegisterPage from './pages/RegisterPage.jsx'
-import WaitlistPage from './pages/WaitlistPage.jsx'
 
 function App() {
   return (
@@ -16,9 +15,9 @@ function App() {
             <Route path="register" element={<RegisterPage />} />
             <Route path="login" element={<LoginPage />} />
           </Route>
-          <Route path="waitlist" element={<WaitlistPage />} />
-          <Route path="dashboard" element={<DashboardPage gated />} />
-          <Route path="dashboard-preview" element={<DashboardPage preview />} />
+          <Route path="waitlist" element={<Navigate to="/dashboard" replace />} />
+          <Route path="dashboard" element={<DashboardPage />} />
+          <Route path="dashboard-preview" element={<Navigate to="/dashboard" replace />} />
           <Route path="*" element={<Navigate to="/register" replace />} />
         </Routes>
       </ThemeProvider>

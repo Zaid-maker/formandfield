@@ -21,6 +21,7 @@ async function requireAuth(req, res, next) {
         if (
             payload === null ||
             typeof payload !== 'object' ||
+            payload.tokenUse !== 'access' ||
             typeof payload.sub !== 'string' ||
             !mongoose.isValidObjectId(payload.sub)
         ) {

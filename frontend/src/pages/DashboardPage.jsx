@@ -1,7 +1,8 @@
-import { useState } from 'react'
-import { Navigate, useNavigate } from 'react-router'
+import { useEffect, useState } from 'react'
+import { Navigate } from 'react-router'
 import ThemeToggle from '../components/ThemeToggle.jsx'
 import useDashboardChat from '../hooks/useDashboardChat.js'
+import { hasAccessToken, refreshAccessToken } from '../lib/api.js'
 
 const demoServers = [
   { id: 'field-notes', label: 'Field Notes', short: 'FN', color: 'bg-violet-600' },
@@ -14,8 +15,7 @@ const demoChannels = [
   { category: 'HANGOUT', items: ['off-topic', 'show-and-tell'] },
 ]
 
-function DashboardWorkspace({ isPreview }) {
-  const navigate = useNavigate()
+function DashboardWorkspace() {
   const {
     activeChannelId,
     channels: workspaceChannels,
@@ -28,7 +28,7 @@ function DashboardWorkspace({ isPreview }) {
     server,
     setActiveChannelId,
     user,
-  } = useDashboardChat({ isPreview })
+  } = useDashboardChat()
   const [demoActiveServer, setDemoActiveServer] = useState(demoServers[0])
   const [demoActiveChannel, setDemoActiveChannel] = useState('general')
   const [draft, setDraft] = useState('')
@@ -167,7 +167,7 @@ function DashboardWorkspace({ isPreview }) {
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-violet-600 text-xs font-bold text-white">Y</div>
           <div className="min-w-0 flex-1">
             <p className="truncate text-xs font-semibold">{user?.username ?? 'Your account'}</p>
-            <p className="truncate text-[10px] text-slate-500 dark:text-slate-400">{hasToken ? 'Online' : 'On the waitlist'}</p>
+            <p className="truncate text-[10px] text-slate-500 dark:text-slate-400">Online</p>
           </div>
           <button type="button" aria-label="User settings" className="rounded p-1 text-slate-500 hover:bg-slate-200 dark:text-slate-400 dark:hover:bg-white/10">
             <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-4 w-4">
@@ -185,18 +185,6 @@ function DashboardWorkspace({ isPreview }) {
           <p className="hidden truncate text-xs text-slate-500 dark:text-slate-400 sm:block">
             A good place to start a conversation.
           </p>
-          {isPreview && (
-            <button
-              type="button"
-              onClick={() => {
-                sessionStorage.removeItem('dashboardPreview')
-                navigate('/waitlist')
-              }}
-              className="ml-auto rounded-lg border border-violet-200 px-3 py-1.5 text-xs font-semibold text-violet-700 transition hover:bg-violet-50 dark:border-violet-400/20 dark:text-violet-200 dark:hover:bg-violet-400/10"
-            >
-              Exit preview
-            </button>
-          )}
           <div className="ml-auto flex items-center gap-3 text-slate-500 dark:text-slate-400">
             <button type="button" aria-label="Search messages" className="rounded p-1 hover:bg-slate-100 dark:hover:bg-white/10">
               <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="h-5 w-5">
@@ -284,16 +272,47 @@ function DashboardWorkspace({ isPreview }) {
   )
 }
 
-function DashboardPage({ gated = false, preview = false }) {
-  if (gated) {
-    return <Navigate to="/waitlist" replace />
+function DashboardPage() {
+  const [authState, setAuthState] = useState(() => hasAccessToken() ? 'ready' : 'restoring')
+  const [retryCount, setRetryCount] = useState(0)
+
+  useEffect(() => {
+    if (hasAccessToken()) {
+      return
+    }
+
+    let active = true
+    refreshAccessToken()
+      .then(() => {
+        if (active) setAuthState('ready')
+      })
+      .catch((error) => {
+        if (active) setAuthState(error.response?.status === 401 ? 'unauthenticated' : 'error')
+      })
+
+    return () => {
+      active = false
+    }
+  }, [retryCount])
+
+  if (authState === 'restoring') {
+    return <main className="flex min-h-screen items-center justify-center bg-slate-100 text-sm text-slate-600 dark:bg-[#1e1f22] dark:text-slate-300">Restoring your session…</main>
   }
 
-  if (preview && sessionStorage.getItem('dashboardPreview') !== 'true') {
-    return <Navigate to="/waitlist" replace />
+  if (authState === 'error') {
+    return (
+      <main className="flex min-h-screen flex-col items-center justify-center gap-4 bg-slate-100 px-6 text-center dark:bg-[#1e1f22]">
+        <p role="alert" className="text-sm text-rose-700 dark:text-rose-200">Unable to restore your session. Check your connection and try again.</p>
+        <button type="button" onClick={() => { setAuthState('restoring'); setRetryCount((count) => count + 1) }} className="rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-700">Try again</button>
+      </main>
+    )
   }
 
-  return <DashboardWorkspace isPreview={preview} />
+  if (authState === 'unauthenticated') {
+    return <Navigate to="/login" replace />
+  }
+
+  return <DashboardWorkspace />
 }
 
 export default DashboardPage

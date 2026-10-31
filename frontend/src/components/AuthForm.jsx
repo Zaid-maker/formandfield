@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
-import api from '../lib/api.js'
+import api, { setAccessToken } from '../lib/api.js'
 import FormField from './FormField.jsx'
 
 function AuthForm({ mode }) {
@@ -42,12 +42,7 @@ function AuthForm({ mode }) {
 
     try {
       if (isRegister) {
-        const account = {
-          firstName: form.firstName.trim(),
-          emailAddress: form.emailAddress.trim().toLowerCase(),
-        }
-
-        await api.post('/auth/register', {
+        const response = await api.post('/auth/register', {
           firstName: form.firstName,
           lastName: form.lastName,
           fullName: `${form.firstName.trim()} ${form.lastName.trim()}`.trim(),
@@ -56,25 +51,29 @@ function AuthForm({ mode }) {
           password: form.password,
         })
 
-        sessionStorage.setItem('registeredAccount', JSON.stringify(account))
-        navigate('/waitlist', { state: account })
+        if (!response.data.accessToken) {
+          throw new Error('Your account was created, but we couldn’t sign you in. Please sign in.')
+        }
+
+        setAccessToken(response.data.accessToken)
+        navigate('/dashboard', { replace: true })
       } else {
         const response = await api.post('/auth/login', {
           emailAddress: form.emailAddress,
           password: form.password,
         })
 
-        if (response.data.token) {
-          sessionStorage.setItem('token', response.data.token)
+        if (!response.data.accessToken) {
+          throw new Error('Sign-in did not return an authentication token. Please try again.')
         }
-        const account = { emailAddress: form.emailAddress.trim().toLowerCase() }
-        sessionStorage.setItem('registeredAccount', JSON.stringify(account))
-        navigate('/waitlist', { state: account })
+
+        setAccessToken(response.data.accessToken)
+        navigate('/dashboard', { replace: true })
       }
     } catch (error) {
       setFeedback({
         type: 'error',
-        message: error.response?.data?.message || 'We couldn’t connect. Please try again in a moment.',
+        message: error.response?.data?.message || error.message || 'We couldn’t connect. Please try again in a moment.',
       })
     } finally {
       setIsSubmitting(false)
