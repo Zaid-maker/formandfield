@@ -29,8 +29,5 @@ membershipSchema.pre('save', function (next) {
 
 // indexes
 membershipSchema.index({ server: 1, user: 1 }, { unique: true });
-membershipSchema.index({ user: 1 });
-membershipSchema.index({ server: 1 });
-membershipSchema.index({ role: 1 });
 
 export default mongoose.model('Membership', membershipSchema);

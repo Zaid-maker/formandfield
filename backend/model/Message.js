@@ -31,7 +31,5 @@ messageSchema.pre('save', function (next) {
 });
 
 messageSchema.index({ channel: 1, _id: -1 });
-messageSchema.index({ author: 1 });
-messageSchema.index({ createdAt: -1 });
 
 export default mongoose.model('Message', messageSchema);

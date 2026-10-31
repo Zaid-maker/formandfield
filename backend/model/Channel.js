@@ -11,8 +11,7 @@ const channelSchema = new mongoose.Schema({
     server: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Server',
-        required: true,
-        index: true
+        required: true
     },
     type: {
         type: String,
@@ -30,7 +29,6 @@ channelSchema.pre('save', function (next) {
 
 //indexes
 channelSchema.index({ server: 1, name: 1 }, { unique: true });
-channelSchema.index({ createdAt: -1 });
-channelSchema.index({ name: 1 });
+channelSchema.index({ server: 1, createdAt: 1, _id: 1 });
 
 export default mongoose.model('Channel', channelSchema);

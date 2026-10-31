@@ -35,8 +35,4 @@ userSchema.pre('save', function (next) {
     next();
 });
 
-// indexes
-userSchema.index({ fullName: 1 });
-
-
 export default mongoose.model('User', userSchema);
