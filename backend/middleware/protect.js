@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken';
 import mongoose from 'mongoose';
 import User from '../model/User.js';
 
-async function requireAuth(req, res, next) {
+async function protect(req, res, next) {
     const authorization = req.get('authorization');
     const [scheme, token, ...extra] = authorization?.trim().split(/\s+/) ?? [];
 
@@ -44,4 +44,4 @@ async function requireAuth(req, res, next) {
     }
 }
 
-export default requireAuth;
+export default protect;

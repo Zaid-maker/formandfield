@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, mock, spyOn } from 'bun:test';
 import jwt from 'jsonwebtoken';
 import User from '../model/User.js';
-import requireAuth from '../middleware/requireAuth.js';
+import protect from '../middleware/protect.js';
 
 const JWT_SECRET = 'unit-test-access-token-secret';
 const USER_ID = '507f1f77bcf86cd799439011';
@@ -55,7 +55,7 @@ function createRequestWithAuthorization(authorization) {
     };
 }
 
-describe('requireAuth middleware', () => {
+describe('protect middleware', () => {
     beforeEach(() => {
         previousJwtSecret = process.env.JWT_SECRET;
         process.env.JWT_SECRET = JWT_SECRET;
@@ -74,7 +74,7 @@ describe('requireAuth middleware', () => {
         const result = createResponse();
         const next = mock();
 
-        await requireAuth(createRequest(), result.response, next);
+        await protect(createRequest(), result.response, next);
 
         expect(result.statusCode).toBe(401);
         expect(result.body.message).toBe('Please sign in to continue');
@@ -87,7 +87,7 @@ describe('requireAuth middleware', () => {
         const next = mock();
         const findById = spyOn(User, 'findById');
 
-        await requireAuth(createRequest(token), result.response, next);
+        await protect(createRequest(token), result.response, next);
 
         expect(result.statusCode).toBe(401);
         expect(result.body.message).toBe('Invalid authentication token');
@@ -100,7 +100,7 @@ describe('requireAuth middleware', () => {
         const result = createResponse();
         const next = mock();
 
-        await requireAuth(createRequest(token), result.response, next);
+        await protect(createRequest(token), result.response, next);
 
         expect(result.statusCode).toBe(401);
         expect(result.body.message).toBe('Your session has expired. Please sign in again');
@@ -115,7 +115,7 @@ describe('requireAuth middleware', () => {
         const req = createRequest(createAccessToken());
         const next = mock();
 
-        await requireAuth(req, result.response, next);
+        await protect(req, result.response, next);
 
         expect(findById).toHaveBeenCalledWith(USER_ID);
         expect(select).toHaveBeenCalledWith('_id firstName lastName username');
@@ -130,7 +130,7 @@ describe('requireAuth middleware', () => {
         const result = createResponse();
         const next = mock();
 
-        await requireAuth(createRequest(createAccessToken()), result.response, next);
+        await protect(createRequest(createAccessToken()), result.response, next);
 
         expect(result.statusCode).toBe(401);
         expect(result.body.message).toBe('Invalid authentication token');
@@ -146,7 +146,7 @@ describe('requireAuth middleware', () => {
         const result = createResponse();
         const next = mock();
 
-        await requireAuth(createRequestWithAuthorization(authorization), result.response, next);
+        await protect(createRequestWithAuthorization(authorization), result.response, next);
 
         expect(result.statusCode).toBe(401);
         expect(result.body.message).toBe('Please sign in to continue');
@@ -158,7 +158,7 @@ describe('requireAuth middleware', () => {
         const result = createResponse();
         const next = mock();
 
-        await requireAuth(createRequest(createAccessToken()), result.response, next);
+        await protect(createRequest(createAccessToken()), result.response, next);
 
         expect(result.statusCode).toBe(500);
         expect(result.body.message).toBe('Authentication is not configured');
@@ -177,7 +177,7 @@ describe('requireAuth middleware', () => {
         const next = mock();
         const findById = spyOn(User, 'findById');
 
-        await requireAuth(createRequest(token), result.response, next);
+        await protect(createRequest(token), result.response, next);
 
         expect(result.statusCode).toBe(401);
         expect(findById).not.toHaveBeenCalled();
@@ -190,7 +190,7 @@ describe('requireAuth middleware', () => {
         const next = mock();
         const findById = spyOn(User, 'findById');
 
-        await requireAuth(createRequest(token), result.response, next);
+        await protect(createRequest(token), result.response, next);
 
         expect(result.statusCode).toBe(401);
         expect(result.body.message).toBe('Invalid authentication token');
@@ -207,7 +207,7 @@ describe('requireAuth middleware', () => {
         const result = createResponse();
         const next = mock();
 
-        await requireAuth(createRequest(createAccessToken()), result.response, next);
+        await protect(createRequest(createAccessToken()), result.response, next);
 
         expect(next).toHaveBeenCalledWith(databaseError);
         expect(result.statusCode).toBeUndefined();

@@ -1,12 +1,11 @@
 import express from 'express';
 import { createMessage, getDashboard, getMessages } from '../controllers/dashboardController.js';
-import requireAuth from '../middleware/requireAuth.js';
+import protect from '../middleware/protect.js';
 
 const router = express.Router();
 
-router.use(requireAuth);
-router.get('/', getDashboard);
-router.get('/channels/:channelId/messages', getMessages);
-router.post('/channels/:channelId/messages', createMessage);
+router.get('/', protect, getDashboard);
+router.get('/channels/:channelId/messages', protect, getMessages);
+router.post('/channels/:channelId/messages', protect, createMessage);
 
 export default router;
